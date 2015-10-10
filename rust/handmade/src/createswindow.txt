@@ -1,0 +1,130 @@
+extern crate winapi;
+extern crate user32;
+extern crate kernel32;
+extern crate gdi32;
+extern crate libc;
+use std::ptr;
+
+static mut running : bool=true;
+
+#[allow(non_snake_case)]
+unsafe extern "system" fn MainWindowCallback(Window: winapi::HWND, Message: winapi::UINT, WParam: winapi::WPARAM, LParam: winapi::LPARAM) -> i64
+{
+    let mut result = 0;
+    //println!("Message: {:X}, WM_CLOSE: {:X}", Message, winapi::WM_CLOSE);
+    match Message {
+        winapi::WM_SIZE => println!("WM_SIZE"),//kernel32::OutputDebugStringA("WM_SIZE"),
+        winapi::WM_DESTROY => 
+        {
+            println!("WM_DESTROY");
+            running=false;   
+        },
+        winapi::WM_CLOSE => 
+        {
+            running = false;
+            println!("running: {}", running);
+        },
+        winapi::WM_ACTIVATEAPP => println!("WM_ACTIVATEAPP"),
+        winapi::WM_PAINT => {
+            let mut Paint = winapi::PAINTSTRUCT
+            { //initialisation mandatory by rust
+                hdc: ptr::null_mut(),
+                fErase: 0 as libc::BOOL,
+                rcPaint: winapi::RECT
+                {
+                    left: 0 as libc::LONG,
+                    top: 0 as libc::LONG,
+                    right: 0 as libc::LONG,
+                    bottom: 0 as libc::LONG
+                },
+                fRestore: 0 as libc::BOOL,
+                fIncUpdate: 0 as libc::BOOL,
+                rgbReserved: [0 as libc::BYTE; 32],
+            };
+            Paint.rcPaint.left = 0;
+            let DeviceContext = unsafe { user32::BeginPaint(Window, &mut Paint) };
+            println! ("jaja: {:?}", Paint);
+            let X = Paint.rcPaint.left;
+            let Y = Paint.rcPaint.top;
+            let Height = Paint.rcPaint.bottom -Paint.rcPaint.top;
+            let Width = Paint.rcPaint.right -Paint.rcPaint.left;
+            gdi32::PatBlt(DeviceContext, X,Y,Width,Height, 0);
+
+        },
+        _ => {//println!("default");
+            result = user32::DefWindowProcW(Window, Message, WParam, LParam)
+        }
+    }
+    result
+}
+#[allow(non_snake_case)]
+unsafe fn WinMain(Instance: winapi::HINSTANCE, PrevInstance: winapi::HINSTANCE, CommandLine: winapi::LPSTR, ShowCode: libc::LONG)
+{
+    let mut WindowClass = winapi::WNDCLASSW
+    {
+        style: winapi::CS_HREDRAW|winapi::CS_VREDRAW|winapi::CS_OWNDC,
+        lpfnWndProc: Some(MainWindowCallback), 
+        cbClsExtra: 0 as i32,
+        cbWndExtra: 0 as i32,
+        hInstance: Instance,
+        hIcon: 0 as winapi::HICON,
+        hCursor: 0 as winapi::HCURSOR,
+        hbrBackground: 0 as winapi::HBRUSH,
+        lpszMenuName: "MenuName".as_ptr() as *const u16,
+        lpszClassName: "HandmadeHeroWindowClass".as_ptr() as *const u16,
+    };
+    if (user32::RegisterClassW(& WindowClass)!= 0 as u16) //RegisterClassA?
+    {
+        let WindowHandle: winapi::HWND = user32::CreateWindowExW(
+            0,
+            WindowClass.lpszClassName,
+            "Handmade Hero".as_ptr() as *const u16,
+            winapi::WS_OVERLAPPEDWINDOW|winapi::WS_VISIBLE,
+            winapi::CW_USEDEFAULT,
+            winapi::CW_USEDEFAULT,
+            winapi::CW_USEDEFAULT,
+            winapi::CW_USEDEFAULT,
+            ptr::null_mut(),
+            ptr::null_mut(),
+            Instance,
+            ptr::null_mut()                    
+        );
+        
+        while running
+        {
+            let mut Message = winapi::MSG 
+            {
+                hwnd: ptr::null_mut(),
+                message: 0 as winapi::UINT,
+                wParam: 0 as winapi::WPARAM,
+                lParam: 0 as winapi::LPARAM,
+                time: 0 as winapi::DWORD,
+                pt: winapi::POINT { x: 0 as winapi::LONG, y: 0 as winapi::LONG },
+            };
+            let MessageResult: libc::BOOL;
+            user32::GetMessageW(&mut Message, ptr::null_mut(), 0, 0);
+            //user32::PeekMessageW(Message, ptr::null_mut(), 0, 0, winapi::PM_REMOVE);
+            println!("GotMessage: {:?}", Message);
+            user32::TranslateMessage(&mut Message); //without these lines, some messages are still passed to MainWindowCallback, but these are the queued messages which go through this path and then end up in MainWindowCallback.
+            user32::DispatchMessageW(&mut Message);
+                
+        }
+        
+    }
+
+
+}
+
+#[allow(non_snake_case)]
+fn main () 
+{
+    let Instance: winapi::HINSTANCE = ptr::null_mut();
+    let PrevInstance: winapi::HINSTANCE = ptr::null_mut();
+    let CommandLine: winapi::LPSTR =ptr::null_mut();
+    let ShowCode: libc::LONG =0;
+    unsafe
+    {
+        WinMain(Instance, PrevInstance, CommandLine, ShowCode )
+    }
+}
+

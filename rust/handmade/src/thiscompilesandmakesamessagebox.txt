@@ -1,0 +1,21 @@
+extern crate winapi;
+// extern crate winmm; //used for playsound
+extern crate user32;
+use std::ptr;
+
+
+fn func() {
+    let a=ptr::null_mut();
+    //let b: *mut winapi::minwindef::HINSTANCE__ = ptr::null();
+    //let mut b = winapi::minwindef::HINSTANCE__;
+    let b = ptr::null_mut();
+    //let c: u32 = 0;
+    let c= ptr::null();
+    let  d: u32 = 0;
+    unsafe {
+    user32::MessageBoxA(a,b,c,d);
+    }
+}
+
+fn main () {func()}
+

@@ -1,0 +1,7 @@
+[package]
+name = "samples"
+version = "0.1.0"
+authors = ["daniel <dannoom@hotmail.com>"]
+
+[dependencies]
+num = "*"

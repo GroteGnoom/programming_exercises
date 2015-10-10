@@ -1,0 +1,13 @@
+[package]
+name = "handmade"
+version = "0.1.0"
+authors = ["daniel <dannoom@hotmail.com>"]
+
+[dependencies]
+winapi = "*"
+winmm-sys = "*"
+user32-sys = "*"
+kernel32-sys = "*"
+gdi32-sys = "*"
+libc= "*"
+time= "*"

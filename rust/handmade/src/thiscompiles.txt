@@ -1,0 +1,18 @@
+extern crate winapi;
+extern crate winmm;
+use std::ptr;
+
+
+fn func() {
+    let a=ptr::null();
+    //let b: *mut winapi::minwindef::HINSTANCE__ = ptr::null();
+    //let mut b = winapi::minwindef::HINSTANCE__;
+    let b = ptr::null_mut();
+    let c: u32 = 0;
+    unsafe {
+    winmm::PlaySoundA(a,b,c);
+    }
+}
+
+fn main () {func()}
+

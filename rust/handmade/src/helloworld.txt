@@ -1,0 +1,16 @@
+extern crate winapi;
+extern crate user32;
+use std::ptr;
+
+fn func() {
+    let a=ptr::null_mut();
+    let b= "hello world".as_ptr() as *const i8;
+    let c= "hello".as_ptr() as *const i8;
+    let d: u32 = 0;
+    unsafe {
+    user32::MessageBoxA(a,b,c,d);
+    }
+}
+
+fn main () {func()}
+

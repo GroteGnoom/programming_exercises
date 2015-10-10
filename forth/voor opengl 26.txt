@@ -1,0 +1,9 @@
+komt van ftp://ftp.taygeta.com/pub/Forth/Archive/tutorials/gforth-sdl-opengl/
+
+en de c code komt van 
+
+http://nehe.gamedev.net/tutorial/clipping__reflections_using_the_stencil_buffer/17004/
+
+gezien op
+
+https://groups.google.com/forum/#!topic/comp.lang.forth/NzgOg9ljXQQ
