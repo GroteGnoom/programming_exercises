@@ -1,0 +1,4 @@
+[package]
+name = "dining"
+version = "0.1.0"
+authors = ["Daniel Noom <dannoom@hotmail.com>"]

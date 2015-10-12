@@ -1,0 +1,3 @@
+ghc -fwarn-incomplete-patterns
+ghc -fwarn-name-shadowing
+ben bij C5 p16 of 29
