@@ -44,4 +44,59 @@ rep (v1, each = 2, length = 20)
 
 rep( v2, each=2, times=c(1,2,7,1) )
 
+v3 = c (1, 2, 3, 4)
+v3 [c(1,2)]
+v3 [c(-1, -2)]
+v3 [c(FALSE, TRUE, FALSE, TRUE)]
 
+names (v3) = c("one", "two", "three", "four")
+v3 [c("one", "two")]
+
+v4 = c ("high", "high", "high", "medium", "low", "medium")
+
+v4f = factor (v4)
+as.numeric(v4f)
+
+v4fo = factor ( v4, levels = c("low", "medium", "high"), ordered = TRUE)
+v4fo
+as.numeric(v4fo)
+v4fol = factor ( v4, levels = c ("low", "medium" ,"high"), ordered = TRUE, labels=c("bottom", "middle", "top"))
+v4fol
+
+m1 = matrix( 1:4,
+        ncol =2,
+        byrow=TRUE, 
+        dimnames = list(RowNames = c("Row1", "Row2"),
+                        ColNames = c("Col1", "Col2")))
+
+m1[1,2]
+m1["Row1", "Col2"]
+m1[,1]
+m1[1:2,1]
+m1[3]
+
+a1 = array( 1:6,
+             dim = c(1,2,3),
+             dimnames = list(RowNames = c("Row1"),
+                             ColNames = c("Col1", "Col2"),
+                             Layername = c("Layer1", "Layer2", "Layer3")))
+
+a1
+
+l1 = list (1, "a", 1:3)
+l1
+l2 = list ("a" = 1, "b" = "a", "c" = 1:3)
+l2
+l1[2]
+l2[2]
+l1[[2]]
+l2[[2]]
+l1[[2]][1]
+l2$b[1]
+
+d = data.frame( numbers=1:3 , names=c("one","two","three") )
+d
+d$names
+d[[1]]
+d[1]
+d[1,2]
