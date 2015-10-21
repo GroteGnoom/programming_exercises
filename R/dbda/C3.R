@@ -21,7 +21,7 @@ all.equal(0.1*10/10, 0.1)
 
 v1 = c (3, 4.5)
 
-v
+v1
 
 v2 = c(4 , 5)
 
@@ -100,3 +100,54 @@ d$names
 d[[1]]
 d[1]
 d[1,2]
+
+getwd()
+
+HGNNG = read.csv("programming_exercises/R/dbda/HGNNG.csv")
+HGNNG$Hair
+write.csv(HGNNG, file = "programming_exercises/R/dbda/HGNNG.csv", row.names=FALSE, quote = FALSE)
+save(HGNNG, file = "programming_exercises/R/dbda/HGNNG.Rdata")
+load(file = "programming_exercises/R/dbda/HGNNG.Rdata")
+objects()
+
+summary(v3)
+summary(factor(v3))
+head(s)
+tail(s)
+str(s)
+aggregate(x=HGNNG$Number, by=list(HGNNG$Gender, HGNNG$Hair), FUN= median)
+aggregate(x=list(Number = HGNNG$Number), by=list(Gender = HGNNG$Gender, Hair = HGNNG$Hair), FUN= median)
+aggregate(Number ~ Gender + Hair, data = HGNNG, FUN= median)
+aggregate(x=list(Count=rep(1,NROW(HGNNG))),
+          by=list(Gender = HGNNG$Gender, Hair = HGNNG$Hair), FUN= sum)
+table(list(Gender=HGNNG$Gender,Hair=HGNNG$Hair))
+
+a1
+apply (a1, MARGIN = c(1,3), FUN= sum)
+
+install.packages("reshape2")
+library(reshape2)
+a1m = melt(a1)
+a1m
+
+funky = function (a , b, c=2) {
+  return (a + b^2 + c)
+}
+
+funky (3, b=4)
+
+x=0
+if (x <= 1) {
+  show("jaja")
+} else {
+  show("zozo")
+}
+
+for ( i in 1:10) {
+  show(i)
+}
+?Control
+
+proc.time()
+
+plot( x=1:4 , y=c(1,3,2,4) , type="o" )
