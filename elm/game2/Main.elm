@@ -4,6 +4,11 @@ import Color exposing (rgb)
 import Keyboard
 import Time exposing (fps, inSeconds)
 
+-- GLOBALS
+
+speed : Float
+speed = 3
+
 -- INIT
 
 modelInit : Model
@@ -24,8 +29,7 @@ delta =
 input : Signal Input
 input =
   Signal.sampleOn delta <|
-    Signal.map Input
-      (Signal.map .y Keyboard.arrows)
+    Signal.map Input Keyboard.arrows
 
 -- MODEL
 
@@ -35,7 +39,11 @@ type alias Position =
     }
 
 type alias Input =
-    { dir : Int}
+    { arrows : 
+        {x : Int,
+         y : Int
+        }
+    }
 
 type alias Model =
     {squarePosition : Position
@@ -53,14 +61,14 @@ view model = container 500 500 middle <|
 -- UPDATE
 
 update : Input -> Model -> Model
-update {dir} ({squarePosition} as model) =
-    let newSquarePosition = updateSquare dir squarePosition
+update input ({squarePosition} as model) =
+    let newSquarePosition = updateSquare input squarePosition
     in {model | squarePosition <- newSquarePosition}
 
-updateSquare : Int -> Position -> Position
-updateSquare dir ({x,y} as position) =
+updateSquare : Input -> Position -> Position
+updateSquare input ({x,y} as position) =
     { position |
-        x <- x,
-        y <- y + toFloat dir
+        x <- x + ((toFloat input.arrows.x) * speed),
+        y <- y + ((toFloat input.arrows.y) * speed)
     }
 
