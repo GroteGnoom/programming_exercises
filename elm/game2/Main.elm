@@ -6,14 +6,18 @@ import Time exposing (fps, inSeconds)
 
 -- INIT
 
+modelInit : Model
 modelInit = Model (Position 20 20)
 
 -- SIGNALS
 
+main : Signal Element
 main = Signal.map view model
 
+model : Signal Model
 model = Signal.foldp update modelInit input
 
+delta : Signal Float
 delta =
   Signal.map inSeconds (fps 35)
 
