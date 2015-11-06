@@ -12,8 +12,18 @@ speed = 3
 -- INIT
 
 modelInit : Model
-modelInit = { player = (Square 0 0 20 20 (rgb 100 100 100))
-            , enemy = (Square 100 100 20 20 (rgb 200 200 200))
+modelInit = { player =     Square { left = 0
+                            , bottom = 0
+                            , width = 20
+                            , height = 20
+                            , color = rgb 100 100 100
+                            }
+            , enemy =     Square { left = 100
+                            , bottom = 100
+                            , width = 20
+                            , height = 20
+                            , color = rgb 200 200 200
+                            }
             }
 
 -- SIGNALS
@@ -36,14 +46,6 @@ input =
 
 -- MODEL
 
-type alias Square =
-    { left : Float
-    , bottom : Float
-    , width : Float
-    , height : Float
-    , color : Color
-    }
-
 type alias Position =
     { x : Float
     , y : Float
@@ -57,16 +59,29 @@ type alias Input =
     }
 
 type alias Model =
-    { player : Square
-    , enemy : Square
+    { player : Shape
+    , enemy : Shape
     }
+
+type Shape 
+    = Circle     { x : Float
+                , y : Float
+                , radius : Float
+                , color : Color
+                }
+    | Square     { left : Float
+                , bottom : Float
+                , width : Float
+                , height : Float
+                , color : Color
+                }
 
 -- VIEW
 view : Model -> Element
 view model = container 500 500 bottomLeft <|
     collage 500 500
-        [drawSquare model.player
-        ,drawSquare model.enemy
+        [draw model.player
+        ,draw model.enemy
         ]
 
 -- UPDATE
@@ -105,8 +120,20 @@ hitSquareSquare square1 square2 =
     square1.bottom + square1.height > square2.bottom
 
 -- OTHER
+draw : Shape -> Form
+draw shape = 
+    case shape of
+        Circle -> drawCircle shape
+        Square -> drawSquare shape
+
 drawSquare : Square -> Form
 drawSquare square =
     rect square.width square.height |>
         filled square.color |>
         move (square.left, square.bottom)
+
+drawCircle : Circle -> Form
+drawCircle circle =
+    rect 1 1 |>
+        filled (rgb 100 100 100) |>
+        move (1, 1)
