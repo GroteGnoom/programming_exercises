@@ -4,6 +4,10 @@ import Color exposing (rgb, Color)
 import Keyboard
 import Time exposing (fps, inSeconds)
 
+import Geometry exposing (SquareRecord, CircleRecord, PolygonRecord, Shape, Segment,
+                            hitSquareSquare, intersectCircleSquare)
+
+
 -- GLOBALS
 
 speed : Float
@@ -12,9 +16,27 @@ speed = 3
 -- INIT
 
 modelInit : Model
-modelInit = { player = (Square 0 0 20 20 (rgb 100 100 100))
-            , enemy = (Square 100 100 20 20 (rgb 200 200 200))
+modelInit = 
+    { player = 
+        { outline = Geometry.Square
+            { left = 100
+            , bottom = 100
+            , width = 50
+            , height = 50
             }
+        , color = rgb 100 100 100
+        }
+    , enemy = 
+        { outline = Geometry.Circle
+            { center = 
+                { x = 100
+                , y = 100
+                }
+            , radius = 30
+            }
+        , color = rgb 200 200 200
+        }
+    }
 
 -- SIGNALS
 
@@ -36,17 +58,9 @@ input =
 
 -- MODEL
 
-type alias Square =
-    { left : Float
-    , bottom : Float
-    , width : Float
-    , height : Float
+type alias Creature =
+    { outline : Shape
     , color : Color
-    }
-
-type alias Position =
-    { x : Float
-    , y : Float
     }
 
 type alias Input =
@@ -57,16 +71,16 @@ type alias Input =
     }
 
 type alias Model =
-    { player : Square
-    , enemy : Square
+    { player : Creature
+    , enemy : Creature
     }
 
 -- VIEW
 view : Model -> Element
 view model = container 500 500 bottomLeft <|
     collage 500 500
-        [drawSquare model.player
-        ,drawSquare model.enemy
+        [draw model.enemy
+        ,draw model.player
         ]
 
 -- UPDATE
@@ -76,37 +90,56 @@ update input ({player, enemy} as model) =
     let newPlayer = movePlayer input player |> hitToColorChange enemy
     in {model | player <- newPlayer}
 
-movePlayer : Input -> Square -> Square
-movePlayer input ({left,bottom} as square) =
-    { square |
-        left <- left + ((toFloat input.arrows.x) * speed),
-        bottom <- bottom + ((toFloat input.arrows.y) * speed)
+movePlayer : Input -> Creature -> Creature
+movePlayer input player =
+    let playerOutline = player.outline
+    in case player.outline of
+        Geometry.Square square ->
+            { player |
+                outline <- 
+                    Geometry.Square 
+                    { square 
+                        | left <- square.left + ((toFloat input.arrows.x) * speed)
+                        , bottom <- square.bottom + ((toFloat input.arrows.y) * speed)
+                    }
+            }
+    
+hitToColorChange : Creature -> Creature -> Creature
+hitToColorChange creature1 creature2 =
+    case creature1.outline of
+        Geometry.Square square1 ->
+            case creature2.outline of
+                Geometry.Square square2 ->
+                    if hitSquareSquare square1 square2
+                        then
+                            colorChange creature2 (rgb 255 0 0)
+                        else 
+                            colorChange creature2 (rgb 100 100 100)
+        Geometry.Circle circle1 ->
+            case creature2.outline of
+                Geometry.Square square2 ->
+                    if intersectCircleSquare circle1 square2
+                        then
+                            colorChange creature2 (rgb 255 0 0)
+                        else 
+                            colorChange creature2 (rgb 100 100 100)
+
+colorChange : Creature -> Color -> Creature
+colorChange {outline, color} newColor =
+    { outline = outline
+    , color = newColor
     }
 
-hitToColorChange : Square -> Square -> Square
-hitToColorChange ({left,bottom, width, height, color} as enemy) ({left,bottom, width, height, color} as player) =
-    if hitSquareSquare player enemy
-        then
-            { player |
-                color <- rgb 255 0 0
-            }
-        else 
-            { player |
-                color <- rgb 100 100 100
-            }
-
--- COLLISION DETECTION
-
-hitSquareSquare : Square -> Square -> Bool
-hitSquareSquare square1 square2 =
-    square1.left < square2.left + square2.width &&
-    square1.left + square1.width > square2.left &&
-    square1.bottom < square2.bottom + square2.height &&
-    square1.bottom + square1.height > square2.bottom
-
 -- OTHER
-drawSquare : Square -> Form
-drawSquare square =
-    rect square.width square.height |>
-        filled square.color |>
-        move (square.left, square.bottom)
+draw : Creature -> Form
+draw {outline, color} =
+    case outline of
+        Geometry.Square square ->
+            rect square.width square.height |>
+                filled color |>
+                move (square.left + square.width/2, square.bottom + square.height/2)
+        Geometry.Circle circle ->
+            Graphics.Collage.circle circle.radius |>
+                filled color |>
+                move (circle.center.x, circle.center.y)
+
