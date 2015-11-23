@@ -26,16 +26,18 @@ modelInit =
             }
         , color = rgb 100 100 100
         }
-    , enemy = 
-        { outline = Geometry.Circle
-            { center = 
-                { x = 100
-                , y = 100
+    , enemies = 
+        [
+            { outline = Geometry.Circle
+                { center = 
+                    { x = 100
+                    , y = 100
+                    }
+                , radius = 30
                 }
-            , radius = 30
+            , color = rgb 200 200 200
             }
-        , color = rgb 200 200 200
-        }
+        ]
     }
 
 -- SIGNALS
@@ -72,23 +74,28 @@ type alias Input =
 
 type alias Model =
     { player : Creature
-    , enemy : Creature
+    , enemies : List Creature
     }
 
 -- VIEW
 view : Model -> Element
 view model = container 500 500 bottomLeft <|
     collage 500 500
-        [draw model.enemy
-        ,draw model.player
-        ]
+        ((draw model.player) :: (List.map draw model.enemies))
+        
+        
 
 -- UPDATE
 
 update : Input -> Model -> Model
-update input ({player, enemy} as model) =
-    let newPlayer = movePlayer input player |> hitToColorChange enemy
-    in {model | player <- newPlayer}
+update input ({player, enemies} as model) =
+    case List.head enemies of
+        Just enemy ->
+            let newPlayer = movePlayer input player |> hitToColorChange enemy
+            in {model | player <- newPlayer}
+        Nothing ->
+            let newPlayer = movePlayer input player
+            in {model | player <- newPlayer}
 
 movePlayer : Input -> Creature -> Creature
 movePlayer input player =
