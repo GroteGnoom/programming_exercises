@@ -8,9 +8,9 @@ import Keyboard
 -- GLOBALS / INIT
 
 modelInit : Model
-modelInit = 
+modelInit =
     { player =
-        {outline = 
+        {outline =
             [ {x = 20, y = 20}
             , {x = 20, y = 40}
             , {x = 40, y = 40}
@@ -21,9 +21,9 @@ modelInit =
         , move = polygonMove
         , speed = 3.0
         }
-    , enemies = 
-        [ 
-            {outline = 
+    , enemies =
+        [
+            {outline =
                 [ {x = 120, y = 120}
                 , {x = 120, y = 140}
                 , {x = 140, y = 140}
@@ -59,7 +59,7 @@ input =
 
 
 type alias Input =
-    { arrows : 
+    { arrows :
         { x : Int
         , y : Int
         }
@@ -84,14 +84,14 @@ view model = container 500 500 bottomLeft <|
     collage 500 500
         ((drawCreature model.player) :: (List.map drawCreature model.enemies))
 
-        
+
 -- UPDATE
 update : Input -> Model -> Model
 update input ({player, enemies} as model) =
     let movedPlayer = moveCreature (vecMul player.speed (inputToVector input)) player
     in  {model |
-            player 
-                = if (List.any (intersect player) enemies) 
+            player
+                = if (List.any (intersect player) enemies)
                     then changeColor movedPlayer (rgb 100 100 100)
                     else changeColor movedPlayer (rgb 200 200 200)
         }
@@ -103,11 +103,11 @@ moveCreature  vec creature =
     }
 
 intersect : Creature -> Creature -> Bool
-intersect c1 c2 = 
+intersect c1 c2 =
     intersectPolygonPolygon c1.outline c2.outline
 
 changeColor : Creature -> Color -> Creature
-changeColor creature color = 
+changeColor creature color =
     {creature |
         color = color
     }
@@ -122,21 +122,21 @@ inputToVector input =
     }
 
 drawPolygon : Polygon -> Color -> Form
-drawPolygon poly color = 
+drawPolygon poly color =
     polygon (polyToLF poly) |> filled color
 
 polygonMove : Vector -> Polygon -> Polygon
-polygonMove vec poly  = 
+polygonMove vec poly  =
     List.map (vecAdd vec) poly
 
 polyToLF : Polygon -> List (Float, Float)
-polyToLF poly = 
+polyToLF poly =
     List.map vectorToFF poly
 
 vectorToFF : Vector -> (Float, Float)
 vectorToFF vec =
-    (vec.x, vec.y) 
+    (vec.x, vec.y)
 
 drawCreature : Creature -> Form
-drawCreature creature = 
+drawCreature creature =
  creature.draw creature.outline creature.color
