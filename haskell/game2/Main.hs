@@ -1,15 +1,19 @@
 import qualified Graphics.UI.GLUT as GLUT
 import qualified Data.IORef as DIOR
 import qualified Safe
+import qualified Geometry as Geo
 
 data Inputs = Inputs { keysPressed :: DIOR.IORef [GLUT.Key]
                      }
 
-data Outputs = Outputs {outPos :: DIOR.IORef (GLUT.GLfloat, GLUT.GLfloat)}
+data Outputs = Outputs { outPoly :: DIOR.IORef [(GLUT.GLfloat, GLUT.GLfloat, GLUT.GLfloat)]
+                       , outEnPoly :: DIOR.IORef [(GLUT.GLfloat, GLUT.GLfloat, GLUT.GLfloat)]}
 
-data Model = Model { pos :: (Float, Float)
-                   , allKeysPressed :: [(Int, [GLUT.Key])]
+data Model = Model { allKeysPressed :: [(Int, [GLUT.Key])]
                    , frame :: Int
+                   , player :: Geo.Poly
+                   , speed :: Float
+                   , enemy :: Geo.Poly
                    }
 
 main :: IO ()
@@ -30,19 +34,28 @@ initInputs = do
 
 initOutputs :: IO Outputs
 initOutputs = do
-  _outPos <- DIOR.newIORef (0, 0)
-  return Outputs {outPos = _outPos}
+  _outPoly <- DIOR.newIORef (polyToOutPoly player1)
+  _outEnPoly <- DIOR.newIORef (polyToOutPoly enemy1)
+  return Outputs {outPoly = _outPoly, outEnPoly = _outEnPoly}
 
 initModel :: Model
 initModel =
-  Model { pos = (0,0), allKeysPressed = [], frame = 0}
+  Model { allKeysPressed = []
+        , frame = 0
+        , player = player1
+        , speed = 0.1
+        , enemy = enemy1
+        }
 
 view :: Outputs -> GLUT.DisplayCallback
 view outputs = do
   GLUT.clear [ GLUT.ColorBuffer ]
-  (x',y') <- GLUT.get (outPos outputs)
-  GLUT.renderPrimitive GLUT.Points $
-     mapM_ (\(x, y, z) -> GLUT.vertex $ GLUT.Vertex3 x y z) [(x',y',0)]
+  poly <- GLUT.get (outPoly outputs)
+  enPoly <- GLUT.get (outEnPoly outputs)
+  GLUT.renderPrimitive GLUT.Polygon $
+    mapM_ (\(x, y, z) -> GLUT.vertex $ GLUT.Vertex3 x y z) poly
+  GLUT.renderPrimitive GLUT.Polygon $
+    mapM_ (\(x, y, z) -> GLUT.vertex $ GLUT.Vertex3 x y z) enPoly
   GLUT.flush
 
 keyboardMouse :: Inputs -> GLUT.KeyboardMouseCallback
@@ -51,44 +64,51 @@ keyboardMouse inputs key GLUT.Down _ _ = case key of
   _ -> return ()
 keyboardMouse _ _ _ _ _ = return ()
 
-move :: (Float, Float) -> GLUT.Key -> (Float, Float)
-move (x,y) key = case key of
-  (GLUT.SpecialKey GLUT.KeyLeft ) -> (x-0.1,y)
-  (GLUT.SpecialKey GLUT.KeyRight) -> (x+0.1,y)
-  (GLUT.SpecialKey GLUT.KeyUp   ) -> (x,y+0.1)
-  (GLUT.SpecialKey GLUT.KeyDown ) -> (x,y-0.1)
-  _ -> (x,y)
+keyToVec :: GLUT.Key -> Geo.Vec
+keyToVec key = case key of
+  (GLUT.SpecialKey GLUT.KeyLeft ) -> Geo.Vec (-1) 0
+  (GLUT.SpecialKey GLUT.KeyRight) -> Geo.Vec 1 0
+  (GLUT.SpecialKey GLUT.KeyUp   ) -> Geo.Vec 0 1
+  (GLUT.SpecialKey GLUT.KeyDown ) -> Geo.Vec 0 (-1)
+  _ -> Geo.Vec 0 0
 
 update :: Inputs -> Model -> Outputs -> GLUT.TimerCallback
 update inputs model outputs = do
-  newModel1 <- updateModel inputs model
-  updateOutput (updateState newModel1) outputs
+  newModel1 <- updateInputs inputs model
+  updateOutput (updateModel newModel1) outputs
   GLUT.postRedisplay Nothing
-  GLUT.addTimerCallback 40 (update inputs (updateState newModel1) outputs)
+  GLUT.addTimerCallback 40 (update inputs (updateModel newModel1) outputs)
 
-updateModel :: Inputs -> Model -> IO Model
-updateModel inputs model = do
+updateInputs :: Inputs -> Model -> IO Model
+updateInputs inputs model = do
   _keysPressed <- GLUT.get (keysPressed inputs)
   DIOR.writeIORef (keysPressed inputs) [] -- TODO Fix these two? Is there a guarantee that key presses aren't lost in between? According to 'tackling the awkward squad' this should be fine. But 'do notation considered harmful' says "Newcomers might think that the order of statements determines the order of execution."
-  return Model {pos = pos model
-               , allKeysPressed = (frame model, _keysPressed) : allKeysPressed model
+  return Model { allKeysPressed = (frame model, _keysPressed) : allKeysPressed model
                , frame = frame model
+               , player = player model
+               , speed = speed model
+               , enemy = enemy model
                }
 
-updateState :: Model -> Model
-updateState model =
+updateModel :: Model -> Model
+updateModel model =
   case Safe.headMay (allKeysPressed model) of
     Just (lastFrameWithPress, lastKeys) ->
       if lastFrameWithPress == frame model
-        then Model {pos = foldl move (pos model) lastKeys
-                   , allKeysPressed = allKeysPressed model
-                   , frame = frame model}
+        then Model { allKeysPressed = allKeysPressed model
+                   , frame = frame model
+                   , player = Geo.move (player model)
+                                       (Geo.vMul (foldl Geo.vAdd (Geo.Vec 0 0)
+                                                            (map keyToVec lastKeys))
+                                            (speed model))
+                    , speed = speed model
+                    , enemy = enemy model}
         else model
     Nothing -> model
 
 updateOutput :: Model -> Outputs -> IO()
 updateOutput model output = do
-  DIOR.writeIORef (outPos output) (posToOutPos (pos model))
+  DIOR.writeIORef (outPoly output) (polyToOutPoly (player model))
   return ()
 
 addKey :: GLUT.Key -> DIOR.IORef [GLUT.Key] -> IO ()
@@ -99,5 +119,26 @@ addKey key list = do
 fToGL :: Float -> GLUT.GLfloat
 fToGL = realToFrac :: Float -> GLUT.GLfloat
 
-posToOutPos :: (Float, Float) -> (GLUT.GLfloat, GLUT.GLfloat)
-posToOutPos (a,b) = (fToGL a, fToGL b)
+posToOutPos :: Geo.Vec -> (GLUT.GLfloat, GLUT.GLfloat, GLUT.GLfloat)
+posToOutPos (Geo.Vec a b) = (fToGL a, fToGL b, 0)
+
+polyToOutPoly :: Geo.Poly -> [(GLUT.GLfloat, GLUT.GLfloat, GLUT.GLfloat)]
+polyToOutPoly (Geo.Poly vecList) =
+  map posToOutPos vecList
+
+
+player1 :: Geo.Poly
+player1 =
+  Geo.Poly [ Geo.Vec 0 0
+           , Geo.Vec 0 0.1
+           , Geo.Vec 0.1 0.1
+           , Geo.Vec 0.1 0
+           ]
+
+enemy1 :: Geo.Poly
+enemy1 =
+  Geo.Poly [ Geo.Vec 0.2 0.2
+           , Geo.Vec 0.2 0.3
+           , Geo.Vec 0.3 0.3
+           , Geo.Vec 0.3 0.2
+           ]
