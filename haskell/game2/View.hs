@@ -1,13 +1,11 @@
 module View where
-
+import qualified Geometry as Geo
 import qualified Data.IORef as DIOR
 import qualified Graphics.UI.GLUT as GLUT
 import qualified Mod
-import qualified Geometry as Geo
 
 data Outputs = Outputs { outPoly :: DIOR.IORef [(GLUT.GLfloat, GLUT.GLfloat, GLUT.GLfloat)]
                        , outEnPoly :: DIOR.IORef [(GLUT.GLfloat, GLUT.GLfloat, GLUT.GLfloat)]}
-
 
 view :: Outputs -> GLUT.DisplayCallback
 view outputs = do
@@ -20,9 +18,10 @@ view outputs = do
     mapM_ (\(x, y, z) -> GLUT.vertex $ GLUT.Vertex3 x y z) enPoly
   GLUT.flush
 
-updateOutput :: Mod.Model -> Outputs -> IO()
+updateOutput :: Mod.Model -> View.Outputs -> IO()
 updateOutput model output = do
-  DIOR.writeIORef (outPoly output) (polyToOutPoly (Mod.player model))
+  DIOR.writeIORef (View.outPoly output) (polyToOutPoly (Mod.player model))
+  DIOR.writeIORef (View.outEnPoly output) (polyToOutPoly (Mod.enemy model))
   return ()
 
 fToGL :: Float -> GLUT.GLfloat

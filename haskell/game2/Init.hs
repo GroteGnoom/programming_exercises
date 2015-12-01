@@ -3,7 +3,12 @@ import qualified Mod
 import qualified Geometry as Geo
 import qualified View
 import qualified Data.IORef as DIOR
+import qualified Controller as Ctrl
 
+initInputs :: IO Ctrl.Inputs
+initInputs = do
+  _keysPressed <- DIOR.newIORef []
+  return Ctrl.Inputs {Ctrl.keysPressed = _keysPressed}
 
 initOutputs :: IO View.Outputs
 initOutputs = do
